@@ -75,8 +75,9 @@ Testing on `fresh-espo.devcrm.cz`:
 ### `safari_get_console_logs`
 
 **Parameters:**
-- `sessionId` (string): The Safari session ID
-- `logLevel` (optional): Filter by level - `'ALL'`, `'DEBUG'`, `'INFO'`, `'WARNING'`, `'SEVERE'`
+- `sessionId` (string, required): The Safari session ID
+- `logLevel` (string, optional): Filter by level - `'ALL'`, `'DEBUG'`, `'INFO'`, `'WARNING'`, `'SEVERE'`
+- `filterText` (string, optional): Filter logs by text content (case-insensitive, grep-like search)
 
 **Returns:**
 Array of console log entries:
@@ -92,13 +93,22 @@ interface ConsoleLogEntry {
 **Example:**
 ```javascript
 // Get ALL logs
-const allLogs = await getConsoleLogs('my-session', 'ALL');
+const allLogs = await getConsoleLogs('my-session');
 
 // Get only warnings
 const warnings = await getConsoleLogs('my-session', 'WARNING');
 
 // Get only errors
 const errors = await getConsoleLogs('my-session', 'ERROR');
+
+// Grep/filter logs containing "Extender"
+const extenderLogs = await getConsoleLogs('my-session', 'ALL', 'Extender');
+
+// Filter warnings containing "404"
+const notFoundWarnings = await getConsoleLogs('my-session', 'WARNING', '404');
+
+// Search for "debug" in any log level
+const debugLogs = await getConsoleLogs('my-session', 'ALL', 'debug');
 ```
 
 ## Handling Large Log Volumes
@@ -112,6 +122,21 @@ const all = await getConsoleLogs('session', 'ALL');  // May exceed limit!
 
 // Get just warnings (much smaller)
 const warnings = await getConsoleLogs('session', 'WARNING');  // 49 messages
+```
+
+### Strategy 1.5: Use Grep/Text Filtering
+```javascript
+// Find specific error messages
+const specificErrors = await getConsoleLogs('session', 'ALL', 'TypeError');
+
+// Search for logs related to a specific module
+const extenderLogs = await getConsoleLogs('session', 'ALL', 'Extender');
+
+// Combine level and text filtering
+const apiErrors = await getConsoleLogs('session', 'ERROR', 'API');
+
+// Find 404 issues
+const notFoundLogs = await getConsoleLogs('session', 'ALL', '404');
 ```
 
 ### Strategy 2: Clear Logs Periodically

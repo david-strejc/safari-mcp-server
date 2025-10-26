@@ -80,7 +80,7 @@ Replace `/absolute/path/to/` with your actual project path.
 - `safari_get_page_info` - Get current page URL and title
 
 #### Developer Tools
-- `safari_get_console_logs` - Get console logs with optional filtering by level
+- `safari_get_console_logs` - Get console logs with optional filtering by level and text (grep-like)
 - `safari_get_network_logs` - Get network activity with request/response data
 - `safari_clear_console_logs` - Clear stored console logs
 - `safari_clear_network_logs` - Clear stored network logs
@@ -96,7 +96,10 @@ Replace `/absolute/path/to/` with your actual project path.
 ```
 1. Start session: safari_start_session with sessionId "main"
 2. Navigate: safari_navigate to "https://example.com"
-3. Get logs: safari_get_console_logs (optionally filter by logLevel: "ERROR")
+3. Get logs: safari_get_console_logs with optional filters:
+   - Filter by level: logLevel="ERROR"
+   - Filter by text (grep): filterText="404"
+   - Combine both: logLevel="WARNING", filterText="Extender"
 4. Take screenshot: safari_take_screenshot (saved to ~/safari-mcp-screenshots/)
 5. Close: safari_close_session
 ```

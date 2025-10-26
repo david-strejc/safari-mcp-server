@@ -145,17 +145,27 @@ export class SafariDriverManager {
     }
   }
 
-  async getConsoleLogs(sessionId: string, logLevel: LogLevel = 'ALL'): Promise<ConsoleLogEntry[]> {
+  async getConsoleLogs(sessionId: string, logLevel: LogLevel = 'ALL', filterText?: string): Promise<ConsoleLogEntry[]> {
     const session = this.getSession(sessionId);
     if (!session) {
       throw new Error(`Session ${sessionId} not found`);
     }
 
     try {
+      let filteredLogs = session.consoleLogs;
+
       // Filter by log level if needed
-      const filteredLogs = logLevel === 'ALL'
-        ? session.consoleLogs
-        : session.consoleLogs.filter((log: ConsoleLogEntry) => log.level === logLevel);
+      if (logLevel !== 'ALL') {
+        filteredLogs = filteredLogs.filter((log: ConsoleLogEntry) => log.level === logLevel);
+      }
+
+      // Filter by text content (grep-like search)
+      if (filterText && filterText.trim() !== '') {
+        const searchTerm = filterText.toLowerCase();
+        filteredLogs = filteredLogs.filter((log: ConsoleLogEntry) =>
+          log.message.toLowerCase().includes(searchTerm)
+        );
+      }
 
       // Return a copy sorted by timestamp
       return [...filteredLogs].sort((a, b) => a.timestamp - b.timestamp);
@@ -187,12 +197,19 @@ export class SafariDriverManager {
     }
 
     try {
-      // Playwright's evaluate passes args differently than Selenium
-      return await session.page.evaluate(({ script, args }) => {
-        // Create a function from the script and call it with args
-        const fn = new Function('...args', script);
-        return fn(...args);
-      }, { script, args });
+      // Execute script directly with Playwright's evaluate
+      // If args are provided, pass them to the script
+      if (args && args.length > 0) {
+        return await session.page.evaluate(({ script, args }) => {
+          const fn = new Function(...args.map((_, i) => `arg${i}`), `return (${script})`);
+          return fn(...args);
+        }, { script, args });
+      } else {
+        // No args - execute script directly
+        return await session.page.evaluate((script) => {
+          return eval(script);
+        }, script);
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Script execution failed: ${errorMessage}`);

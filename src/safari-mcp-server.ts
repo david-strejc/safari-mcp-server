@@ -87,15 +87,19 @@ export class SafariMCPServer {
           },
           {
             name: 'safari_get_console_logs',
-            description: 'Get browser console logs for debugging',
+            description: 'Get browser console logs for debugging with optional filtering',
             inputSchema: {
               type: 'object',
               properties: {
                 sessionId: { type: 'string', description: 'Session identifier' },
-                logLevel: { 
-                  type: 'string', 
+                logLevel: {
+                  type: 'string',
                   enum: ['ALL', 'DEBUG', 'INFO', 'WARNING', 'SEVERE'],
-                  description: 'Filter logs by level'
+                  description: 'Filter logs by level (optional)'
+                },
+                filterText: {
+                  type: 'string',
+                  description: 'Filter logs by text content (case-insensitive, grep-like search). Example: "error", "Extender", "404", etc.'
                 }
               },
               required: ['sessionId']
@@ -302,14 +306,19 @@ export class SafariMCPServer {
   }
 
   private async getConsoleLogs(args: Record<string, any>): Promise<Array<{ type: string; text: string }>> {
-    const { sessionId, logLevel = 'ALL' } = args;
-    
-    const logs = await this.driverManager.getConsoleLogs(sessionId, logLevel as LogLevel);
-    
+    const { sessionId, logLevel = 'ALL', filterText } = args;
+
+    const logs = await this.driverManager.getConsoleLogs(sessionId, logLevel as LogLevel, filterText);
+
+    const filterInfo: string[] = [];
+    if (logLevel !== 'ALL') filterInfo.push(`level=${logLevel}`);
+    if (filterText) filterInfo.push(`text="${filterText}"`);
+    const filterDesc = filterInfo.length > 0 ? ` (filtered by: ${filterInfo.join(', ')})` : '';
+
     return [
       {
         type: 'text',
-        text: `Console Logs (${logs.length} entries):\n\n${JSON.stringify(logs, null, 2)}`
+        text: `Console Logs (${logs.length} entries${filterDesc}):\n\n${JSON.stringify(logs, null, 2)}`
       }
     ];
   }
