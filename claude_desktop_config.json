@@ -1,0 +1,14 @@
+
+{
+  "mcpServers": {
+    "safari-devtools": {
+      "command": "node",
+      "args": [
+        "/Users/<USERNAME>/source/repos/safari-mcp-server/build/index.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
